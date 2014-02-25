@@ -23,7 +23,6 @@ class SignController(threading.Thread):
             must support read() and write() methods.
         """
         self.connection = connection
-        self.lock = threading.Lock()
         self.count = None
         self.cursor = None
 
@@ -36,16 +35,15 @@ class SignController(threading.Thread):
 
     def _receive(self, buf):
         """Handle some data from the sign."""
-        with self.lock:
-            byte_count = len(buf)
-            if byte_count == 4:
-                self._parse_cursor(buf)
-            elif byte_count == 10:
-                self._parse_count_update(buf)
-            elif byte_count == 14:
-                self._parse_periodic_update(buf)
-            else:
-                logging.warning('Unexpected bytes: %s', hexify(buf))
+        byte_count = len(buf)
+        if byte_count == 4:
+            self._parse_cursor(buf)
+        elif byte_count == 10:
+            self._parse_count_update(buf)
+        elif byte_count == 14:
+            self._parse_periodic_update(buf)
+        else:
+            logging.warning('Unexpected bytes: %s', hexify(buf))
 
     def _parse_cursor(self, buf):
         """Parse a cursor positioning message.
@@ -92,5 +90,4 @@ class SignController(threading.Thread):
 
     def _send(self, buf):
         """Send some data to the sign."""
-        with self.lock:
-            self.connection.write(buf)
+        self.connection.write(buf)
