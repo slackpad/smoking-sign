@@ -4,7 +4,7 @@ import threading
 import time
 import unittest
 
-from signcontroller import SignController
+from sign_controller import SignController
 
 class MockConnection(object):
 
