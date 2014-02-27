@@ -2,7 +2,7 @@ import logging
 import threading
 import time
 
-CURSOR_HOME = 0x45
+CURSOR_HOME = chr(0x45)
 CURSOR_LEFT = chr(0x15)
 CURSOR_MAGIC_1 = chr(0x59)
 CURSOR_MAGIC_2 = chr(0x2a)
@@ -112,7 +112,7 @@ class SignController(threading.Thread):
         """Parse an escape sequence.
 
         These contain the escape sequence 1b:59:2a followed by the cursor
-        position byte. The value 0x45 represents the "home" position at the
+        position byte. The value 0x45 represents the home position at the
         far left side of the count displayed on the sign.
 
         Returns:
@@ -121,7 +121,7 @@ class SignController(threading.Thread):
         if buf[0] == ESCAPE \
            and buf[1] == CURSOR_MAGIC_1 \
            and buf[2] == CURSOR_MAGIC_2:
-            self.cursor = ord(buf[3]) - CURSOR_HOME
+            self.cursor = ord(buf[3]) - ord(CURSOR_HOME)
         else:
             logging.warning('Unknown escape sequence: %s', hexify(buf))
         return buf[4:]
