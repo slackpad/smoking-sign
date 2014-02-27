@@ -71,13 +71,10 @@ class SignController(threading.Thread):
     def run(self):
         """Service I/O with the sign."""
         while not self.should_exit:
-            # Lock for the duration of this read so that external queries will
-            # get the latest information based on the whole update (there can
-            # be multiple cursor commands in one response and we never want
-            # the intermediate ones).
-            with self.lock:
-                buf = self.connection.read(READ_SIZE)
-                if len(buf) > 0:
+            buf = self.connection.read(READ_SIZE)
+            if len(buf) > 0:
+                logging.debug('Read %s', hexify(buf))
+                with self.lock:
                     self._parse(buf)
                     self._manage_cursor()
 
@@ -143,5 +140,6 @@ class SignController(threading.Thread):
 
     def _send(self, buf):
         """Send some data to the sign."""
+        logging.debug('Write %s', hexify(buf))
         self.connection.write(buf)
         self.connection.flush()
