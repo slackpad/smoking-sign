@@ -7,7 +7,6 @@ import unittest
 
 from sign_controller import SignController
 
-# logging.basicConfig(format='%(asctime)s %(message)s', level=logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 
 class MockConnection(object):
