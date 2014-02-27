@@ -48,6 +48,9 @@ class MockConnection(object):
         with self.lock:
             self.write_stream += buf
 
+    def flush(self):
+        pass
+
 def wait_for_count(controller, count, timeout=1.0):
     start = time.time()
     while time.time() - start < timeout:

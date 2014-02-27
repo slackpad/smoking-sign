@@ -144,3 +144,4 @@ class SignController(threading.Thread):
     def _send(self, buf):
         """Send some data to the sign."""
         self.connection.write(buf)
+        self.connection.flush()
