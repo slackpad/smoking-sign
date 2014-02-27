@@ -1,5 +1,14 @@
 import logging
 import threading
+import time
+
+CURSOR_HOME = 0x45
+CURSOR_LEFT = chr(0x15)
+CURSOR_MAGIC_1 = chr(0x59)
+CURSOR_MAGIC_2 = chr(0x2a)
+ESCAPE = chr(0x1b)
+RATE_LIMIT = 1.0
+READ_SIZE = 1024
 
 def hexify(buf):
     """Return a sequence of bytes as a hexified string."""
@@ -29,19 +38,21 @@ class SignController(threading.Thread):
         self.count = None
         self.cursor = None
 
-    def run(self):
-        """Service I/O with the sign."""
-        while not self.should_exit:
-            buf = self.connection.read(1024)
-            while len(buf) > 0:
-                byte_count = len(buf)
-                if byte_count >= 4 and ord(buf[0]) == 0x1b:
-                    buf = self._parse_escape(buf)
-                elif byte_count >= 6:
-                    buf = self._parse_count(buf)
-                else:
-                    logging.warning('Unexpected data: %s', hexify(buf))
-                    break
+    def set_count(self, count):
+        with self.lock:
+            if self.cursor != 0:
+                logging.warning('Cannot set count, cursor is %d', self.cursor)
+                return
+
+            if count <= 0:
+                count = '000000'
+            elif count > 999999:
+                count = '999999'
+            else:
+                count = str(count)
+                count = ' ' * (6 - len(count)) + count
+
+            self._send(count)
 
     def get_count(self):
         """Get the current count displayed on the sign."""
@@ -57,6 +68,46 @@ class SignController(threading.Thread):
         """Ask the thread to shut down."""
         self.should_exit = True
 
+    def run(self):
+        """Service I/O with the sign."""
+        while not self.should_exit:
+            # Lock for the duration of this read so that external queries will
+            # get the latest information based on the whole update (there can
+            # be multiple cursor commands in one response and we never want
+            # the intermediate ones).
+            with self.lock:
+                buf = self.connection.read(READ_SIZE)
+                if len(buf) > 0:
+                    self._parse(buf)
+                    self._manage_cursor()
+
+    def _parse(self, buf):
+        """Parse a response from the sign."""
+        while len(buf) > 0:
+            byte_count = len(buf)
+            if byte_count >= 4 and buf[0] == ESCAPE:
+                buf = self._parse_escape(buf)
+            elif byte_count >= 6:
+                buf = self._parse_count(buf)
+            else:
+                logging.warning('Unexpected data: %s', hexify(buf))
+                break
+
+    def _manage_cursor(self):
+        """Manage the cursor position so we are ready to update the count at any
+        time.
+
+        Our goal is always to move the cursor to the home position. This gets
+        called after we get an update from the sign, which should always be a
+        quiet time (it will be about a minute before the sign sends another
+        periodic update). Since this is based on feedback we always add a delay
+        after we make an adjustment so we never blast the sign with updates.
+        """
+        if self.cursor is not None and self.cursor != 0:
+            logging.info('Adjusting cursor from %d', self.cursor)
+            self._send(CURSOR_LEFT)
+            time.sleep(RATE_LIMIT)
+
     def _parse_escape(self, buf):
         """Parse an escape sequence.
 
@@ -67,11 +118,10 @@ class SignController(threading.Thread):
         Returns:
           Remaining (unparsed) portion of buf.
         """
-        if ord(buf[0]) == 0x1b \
-           and ord(buf[1]) == 0x59 \
-           and ord(buf[2]) == 0x2a:
-            with self.lock:
-                self.cursor = ord(buf[3]) - 0x45
+        if buf[0] == ESCAPE \
+           and buf[1] == CURSOR_MAGIC_1 \
+           and buf[2] == CURSOR_MAGIC_2:
+            self.cursor = ord(buf[3]) - CURSOR_HOME
         else:
             logging.warning('Unknown escape sequence: %s', hexify(buf))
         return buf[4:]
@@ -86,8 +136,7 @@ class SignController(threading.Thread):
           Remaining (unparsed) portion of buf.
         """
         try:
-            with self.lock:
-                self.count = int(buf[0:6])
+            self.count = int(buf[0:6])
         except ValueError:
             logging.warning('Unexpected count value: %s', hexify(buf))
         return buf[6:]
