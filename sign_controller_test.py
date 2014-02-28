@@ -1,3 +1,7 @@
+"""
+Unit tests for the sign controller.
+"""
+
 import logging
 import threading
 import time
@@ -9,7 +13,6 @@ from sign_util import *
 logging.basicConfig(level=logging.DEBUG)
 
 class MockConnection(object):
-
     def __init__(self):
         self.lock = threading.Lock()
         self.read_stream = ''

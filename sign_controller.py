@@ -1,3 +1,8 @@
+"""
+Class which manages the state of the sign and provides an interface for updating
+the displayed count.
+"""
+
 import logging
 import threading
 import time
@@ -32,11 +37,23 @@ class SignController(threading.Thread):
         self.cursor = None
 
     def ping(self):
-        # Ping the sign so we don't have to wait up to a minute for initial
-        # feedback about the cursor position.
+        """Ping the sign to make it return its status.
+
+        This is useful when starting out so we don't have to wait up to a minute
+        for initial feedback about the cursor position. It should be safe to
+        send a ping any time. The cursor will be repositioned back to home.
+        """
         self._send(CURSOR_LEFT)
 
     def set_count(self, count):
+        """Set the count displayed on the sign.
+
+        If we haven't gotten feedback about the cursor position then this won't
+        be able to set the count and will log a warning.
+
+        Args:
+          count: Count to set, as a regular integer.
+        """
         with self.lock:
             if self.cursor != 0:
                 logging.warning('Cannot set count, cursor is %d', self.cursor)
@@ -53,12 +70,20 @@ class SignController(threading.Thread):
             self._send(count)
 
     def get_count(self):
-        """Get the current count displayed on the sign."""
+        """Get the current count displayed on the sign.
+
+        Returns:
+          Count, as a regular integer. Will return None if unknown.
+        """
         with self.lock:
             return self.count
 
     def get_cursor(self):
-        """Get the current position of the cursor on the sign."""
+        """Get the current position of the cursor on the sign.
+
+        Returns:
+          Cursor position as a regular integer. Will return None if unknown.
+        """
         with self.lock:
             return self.cursor
 
@@ -110,6 +135,10 @@ class SignController(threading.Thread):
         position byte. The value 0x45 represents the home position at the
         far left side of the count displayed on the sign.
 
+        Args:
+          buf: Buffer containing an escape sequence, followed by potentially
+            other data which will not be consumed.
+
         Returns:
           Remaining (unparsed) portion of buf.
         """
@@ -127,6 +156,10 @@ class SignController(threading.Thread):
         These contain the six digits that were entered, with possible spaces for
         leading digits.
 
+        Args:
+          buf: Buffer containing a count sequence, followed by potentially
+            other data which will not be consumed.
+
         Returns:
           Remaining (unparsed) portion of buf.
         """
@@ -137,7 +170,11 @@ class SignController(threading.Thread):
         return buf[6:]
 
     def _send(self, buf):
-        """Send some data to the sign."""
+        """Send some data to the sign.
+
+        Args:
+          buf: Data to send to the sign.
+        """
         logging.debug('Write %s', hexify(buf))
         self.connection.write(buf)
         self.connection.flush()

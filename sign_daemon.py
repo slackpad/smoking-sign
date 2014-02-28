@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Sign daemon which updates the count over time.
+Sign daemon process that maintains the count displayed on the sign.
 """
 
 import datetime
@@ -18,6 +18,7 @@ RATE_LIMIT = 1.0
 SECONDS_PER_YEAR = 365 * 86400
 
 class MockConnection(object):
+    """Fake connection used for standalone testing without a serial device."""
 
     def __init__(self):
         self.first = True
@@ -36,26 +37,24 @@ class MockConnection(object):
     def flush(self):
         pass
 
-def make_connection(mock, port):
-    if mock:
-        return MockConnection()
-    else:
-        return serial.Serial(port,
-                             4800,
-                             timeout=1,
-                             bytesize=serial.SEVENBITS,
-                             parity=serial.PARITY_ODD,
-                             stopbits=serial.STOPBITS_TWO,
-                             xonxoff=False,
-                             rtscts=False,
-                             dsrdtr=False)
+def run_fixed(controller, count):
+    """Run in fixed mode, maintaining a constant number on the sign.
 
-def run_fixed(controller, target):
+    Args:
+      controller: Controller used to communicate with the sign.
+      count: Count to display on the sign.
+    """
     while controller.is_alive():
-        controller.set_count(int(target))
+        controller.set_count(int(count))
         time.sleep(RATE_LIMIT)
 
 def run_target(controller, target):
+    """Run in target mode, counting up to an annual target.
+
+    Args:
+      controller: Controller used to communicate with the sign.
+      target: Target to count to by the end of the year.
+    """
     rate_per_second = float(target) / SECONDS_PER_YEAR
     while controller.is_alive():
         now = datetime.datetime.now()
@@ -65,6 +64,7 @@ def run_target(controller, target):
         time.sleep(RATE_LIMIT)
 
 def go():
+    """Main daemon function."""
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                         level=logging.DEBUG)
 
@@ -79,7 +79,19 @@ def go():
                       help='Annual target to automatically count up to')
     (options, args) = parser.parse_args()
 
-    connection = make_connection(options.mock, options.port)
+    if options.mock:
+        connection = MockConnection()
+    else:
+        connection = serial.Serial(options.port,
+                                   4800,
+                                   timeout=1,
+                                   bytesize=serial.SEVENBITS,
+                                   parity=serial.PARITY_ODD,
+                                   stopbits=serial.STOPBITS_TWO,
+                                   xonxoff=False,
+                                   rtscts=False,
+                                   dsrdtr=False)
+
     controller = SignController(connection)
     controller.start()
 
@@ -101,9 +113,9 @@ def go():
     time.sleep(2.0)
 
     if options.fixed is not None:
-        target = int(options.fixed)
-        logging.info('Running fixed mode for %d...', target)
-        run_fixed(controller, target)
+        count = int(options.fixed)
+        logging.info('Running fixed mode for %d...', count)
+        run_fixed(controller, count)
     else:
         target = int(options.target)
         logging.info('Running target mode for %d...', target)
