@@ -4,23 +4,15 @@ Simple utility used to sniff serial data going to or coming from the sign.
 """
 
 import optparse
-import serial
 import sys
+
+from sign_util import create_serial_connection
 
 parser = optparse.OptionParser()
 parser.add_option('-p', '--port', dest='port', default='/dev/ttyUSB0')
 (options, args) = parser.parse_args()
 
-ser = serial.Serial(options.port,
-                    4800,
-                    timeout=1,
-                    bytesize=serial.SEVENBITS,
-                    parity=serial.PARITY_ODD,
-                    stopbits=serial.STOPBITS_TWO,
-                    xonxoff=False,
-                    rtscts=False,
-                    dsrdtr=False)
-
+ser = create_serial_connection(options.port)
 while True:
     data = ser.read(1024)
     hexified = ':'.join('{0:02x}'.format(ord(c)) for c in data)

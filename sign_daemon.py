@@ -6,13 +6,12 @@ Sign daemon process that maintains the count displayed on the sign.
 import datetime
 import logging
 import optparse
-import serial
 import signal
 import sys
 import time
 
 from sign_controller import SignController
-from sign_util import *
+from sign_util import create_serial_connection, seconds_into_year
 
 RATE_LIMIT = 1.0
 SECONDS_PER_YEAR = 365 * 86400
@@ -82,15 +81,7 @@ def go():
     if options.mock:
         connection = MockConnection()
     else:
-        connection = serial.Serial(options.port,
-                                   4800,
-                                   timeout=1,
-                                   bytesize=serial.SEVENBITS,
-                                   parity=serial.PARITY_ODD,
-                                   stopbits=serial.STOPBITS_TWO,
-                                   xonxoff=False,
-                                   rtscts=False,
-                                   dsrdtr=False)
+        connection = create_serial_connection(options.port)
 
     controller = SignController(connection)
     controller.start()
