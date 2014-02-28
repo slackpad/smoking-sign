@@ -164,7 +164,10 @@ class SignController(threading.Thread):
           Remaining (unparsed) portion of buf.
         """
         try:
-            self.count = int(buf[0:6])
+            count = int(buf[0:6])
+            if count != self.count:
+                logging.debug('Count changed to %d', count)
+            self.count = count
         except ValueError:
             logging.warning('Unexpected count value: %s', hexify(buf))
         return buf[6:]
