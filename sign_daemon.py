@@ -11,7 +11,11 @@ import signal
 import sys
 import time
 
-from sign_controller import SignController, hexify
+from sign_controller import SignController
+from sign_util import *
+
+RATE_LIMIT = 1.0
+SECONDS_PER_YEAR = 365 * 86400
 
 class MockConnection(object):
 
@@ -49,10 +53,16 @@ def make_connection(mock, port):
 def run_fixed(controller, target):
     while controller.is_alive():
         controller.set_count(int(target))
-        time.sleep(60.0 / 10)
+        time.sleep(RATE_LIMIT)
 
 def run_target(controller, target):
-    pass
+    rate_per_second = float(target) / SECONDS_PER_YEAR
+    while controller.is_alive():
+        now = datetime.datetime.now()
+        now_seconds = seconds_into_year(now)
+        count = now_seconds * rate_per_second
+        controller.set_count(int(count))
+        time.sleep(RATE_LIMIT)
 
 def go():
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
@@ -79,15 +89,16 @@ def go():
     signal.signal(signal.SIGINT, cleanup)
 
     logging.info('Waiting for cursor sync...')
+    controller.ping()
     while controller.get_cursor() != 0:
         logging.debug(controller.get_cursor())
         time.sleep(1.0)
 
     logging.info('Running test patterns...')
     controller.set_count(888888)
-    time.sleep(5.0)
+    time.sleep(2.0)
     controller.set_count(0)
-    time.sleep(5.0)
+    time.sleep(2.0)
 
     if options.fixed is not None:
         target = int(options.fixed)
@@ -98,6 +109,7 @@ def go():
         logging.info('Running target mode for %d...', target)
         run_target(controller, target)
 
+    controller.request_exit()
     controller.join()
 
 if __name__ == '__main__':

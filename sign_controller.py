@@ -2,17 +2,10 @@ import logging
 import threading
 import time
 
-CURSOR_HOME = chr(0x45)
-CURSOR_LEFT = chr(0x15)
-CURSOR_MAGIC_1 = chr(0x59)
-CURSOR_MAGIC_2 = chr(0x2a)
-ESCAPE = chr(0x1b)
+from sign_util import *
+
 RATE_LIMIT = 1.0
 READ_SIZE = 1024
-
-def hexify(buf):
-    """Return a sequence of bytes as a hexified string."""
-    return ':'.join('{0:02x}'.format(ord(c)) for c in buf)
 
 class SignController(threading.Thread):
     """Controller for an ancient electronic sign.
@@ -37,6 +30,11 @@ class SignController(threading.Thread):
         self.connection = connection
         self.count = None
         self.cursor = None
+
+    def ping(self):
+        # Ping the sign so we don't have to wait up to a minute for initial
+        # feedback about the cursor position.
+        self._send(CURSOR_LEFT)
 
     def set_count(self, count):
         with self.lock:

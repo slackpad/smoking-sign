@@ -4,6 +4,7 @@ import time
 import unittest
 
 from sign_controller import SignController
+from sign_util import *
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -64,7 +65,8 @@ def wait_for_cursor(controller, cursor, timeout=1.0):
     return False
 
 def set_cursor(pos):
-    return chr(0x1b) + chr(0x59) + chr(0x2a) + chr(pos + 0x45)
+    return ESCAPE + CURSOR_MAGIC_1 + CURSOR_MAGIC_2 + \
+        chr(ord(CURSOR_HOME) + pos)
 
 class TestSignController(unittest.TestCase):
 
@@ -107,12 +109,28 @@ class TestSignController(unittest.TestCase):
 
         connection.add_for_read(set_cursor(1))
         self.assertTrue(wait_for_cursor(controller, 1))
-        self.assertEqual(connection.wait_for_write(), chr(0x15))
+        self.assertEqual(connection.wait_for_write(), CURSOR_LEFT)
 
         for i in range(5, 0, -1):
             connection.add_for_read(set_cursor(i))
             self.assertTrue(wait_for_cursor(controller, i))
-            self.assertEqual(connection.wait_for_write(), chr(0x15))
+            self.assertEqual(connection.wait_for_write(), CURSOR_LEFT)
+
+        connection.add_for_read(set_cursor(0))
+        self.assertTrue(wait_for_cursor(controller, 0))
+
+        controller.request_exit()
+        controller.join()
+
+    def test_ping(self):
+        connection = MockConnection()
+        controller = SignController(connection)
+        controller.start()
+
+        self.assertTrue(wait_for_cursor(controller, None))
+
+        controller.ping()
+        self.assertEqual(connection.wait_for_write(), CURSOR_LEFT)
 
         connection.add_for_read(set_cursor(0))
         self.assertTrue(wait_for_cursor(controller, 0))
@@ -127,7 +145,7 @@ class TestSignController(unittest.TestCase):
 
         connection.add_for_read(set_cursor(1))
         self.assertTrue(wait_for_cursor(controller, 1))
-        self.assertEqual(connection.wait_for_write(), chr(0x15))
+        self.assertEqual(connection.wait_for_write(), CURSOR_LEFT)
         controller.set_count(123456)
         self.assertEqual(connection.wait_for_write(), '')
         self.assertEqual(controller.get_count(), None)
@@ -173,12 +191,12 @@ class TestSignController(unittest.TestCase):
         self.assertTrue(wait_for_count(controller, None))
         self.assertTrue(wait_for_cursor(controller, None))
 
-        connection.add_for_read(chr(0x1b))
+        connection.add_for_read(ESCAPE)
         self.assertTrue(connection.wait_for_read())
         self.assertTrue(wait_for_count(controller, None))
         self.assertTrue(wait_for_cursor(controller, None))
 
-        connection.add_for_read(chr(0x1b) + 'xxxxxxxx')
+        connection.add_for_read(ESCAPE + 'xxxxxxxx')
         self.assertTrue(connection.wait_for_read())
         self.assertTrue(wait_for_count(controller, None))
         self.assertTrue(wait_for_cursor(controller, None))
