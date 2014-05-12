@@ -151,7 +151,7 @@ class SignController(threading.Thread):
         return buf[4:]
 
     def _parse_count(self, buf):
-        """Parse a count update for with the digits on the sign.
+        """Parse a count update with the digits on the sign.
 
         These contain the six digits that were entered, with possible spaces for
         leading digits.
