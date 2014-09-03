@@ -1,6 +1,6 @@
 """
-Class which manages the state of the sign and provides an interface for updating
-the displayed count.
+Class which manages the state of the sign and provides an interface for
+updating the displayed count.
 """
 
 import logging
@@ -12,7 +12,9 @@ from sign_util import *
 RATE_LIMIT = 1.0
 READ_SIZE = 1024
 
+
 class SignController(threading.Thread):
+
     """Controller for an ancient electronic sign.
 
     This maintains an estimate of the state of the sign itself, and provides
@@ -39,9 +41,10 @@ class SignController(threading.Thread):
     def ping(self):
         """Ping the sign to make it return its status.
 
-        This is useful when starting out so we don't have to wait up to a minute
-        for initial feedback about the cursor position. It should be safe to
-        send a ping any time. The cursor will be repositioned back to home.
+        This is useful when starting out so we don't have to wait up to a
+        minute for initial feedback about the cursor position. It should be
+        safe to send a ping any time. The cursor will be repositioned back
+        to home.
         """
         self._send(CURSOR_LEFT)
 
@@ -114,8 +117,8 @@ class SignController(threading.Thread):
                 break
 
     def _manage_cursor(self):
-        """Manage the cursor position so we are ready to update the count at any
-        time.
+        """Manage the cursor position so we are ready to update the count at
+        any time.
 
         Our goal is always to move the cursor to the home position. This gets
         called after we get an update from the sign, which should always be a
@@ -153,8 +156,8 @@ class SignController(threading.Thread):
     def _parse_count(self, buf):
         """Parse a count update with the digits on the sign.
 
-        These contain the six digits that were entered, with possible spaces for
-        leading digits.
+        These contain the six digits that were entered, with possible spaces
+        for leading digits.
 
         Args:
           buf: Buffer containing a count sequence, followed by potentially

@@ -3,6 +3,7 @@ import unittest
 
 from sign_util import *
 
+
 class TestHexify(unittest.TestCase):
 
     def test_empty(self):
@@ -11,6 +12,7 @@ class TestHexify(unittest.TestCase):
     def test_with_data(self):
         data = ' 12345'
         self.assertEqual(hexify(data), '20:31:32:33:34:35')
+
 
 class TestSecondsIntoYear(unittest.TestCase):
 

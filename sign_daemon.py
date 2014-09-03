@@ -16,7 +16,9 @@ from sign_util import create_serial_connection, seconds_into_year
 RATE_LIMIT = 1.0
 SECONDS_PER_YEAR = 365 * 86400
 
+
 class MockConnection(object):
+
     """Fake connection used for standalone testing without a serial device."""
 
     def __init__(self):
@@ -36,6 +38,7 @@ class MockConnection(object):
     def flush(self):
         pass
 
+
 def run_fixed(controller, count):
     """Run in fixed mode, maintaining a constant number on the sign.
 
@@ -46,6 +49,7 @@ def run_fixed(controller, count):
     while controller.is_alive():
         controller.set_count(int(count))
         time.sleep(RATE_LIMIT)
+
 
 def run_target(controller, target):
     """Run in target mode, counting up to an annual target.
@@ -61,6 +65,7 @@ def run_target(controller, target):
         count = now_seconds * rate_per_second
         controller.set_count(int(count))
         time.sleep(RATE_LIMIT)
+
 
 def go():
     """Main daemon function."""

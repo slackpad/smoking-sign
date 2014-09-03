@@ -12,7 +12,9 @@ from sign_util import *
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 class MockConnection(object):
+
     def __init__(self):
         self.lock = threading.Lock()
         self.read_stream = ''
@@ -53,12 +55,14 @@ class MockConnection(object):
     def flush(self):
         pass
 
+
 def wait_for_count(controller, count, timeout=1.0):
     start = time.time()
     while time.time() - start < timeout:
         if controller.get_count() == count:
             return True
     return False
+
 
 def wait_for_cursor(controller, cursor, timeout=1.0):
     start = time.time()
@@ -67,9 +71,11 @@ def wait_for_cursor(controller, cursor, timeout=1.0):
             return True
     return False
 
+
 def set_cursor(pos):
     return ESCAPE + CURSOR_MAGIC_1 + CURSOR_MAGIC_2 + \
         chr(ord(CURSOR_HOME) + pos)
+
 
 class TestSignController(unittest.TestCase):
 

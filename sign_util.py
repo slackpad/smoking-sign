@@ -11,6 +11,7 @@ CURSOR_MAGIC_1 = chr(0x59)
 CURSOR_MAGIC_2 = chr(0x2a)
 ESCAPE = chr(0x1b)
 
+
 def create_serial_connection(port):
     """Return a serial connection with the correct settings for the real sign.
 
@@ -30,6 +31,7 @@ def create_serial_connection(port):
                          rtscts=False,
                          dsrdtr=False)
 
+
 def hexify(buf):
     """Return a sequence of bytes as a hexified string.
 
@@ -40,6 +42,7 @@ def hexify(buf):
       String with the hex value of each byte, separated with colons.
     """
     return ':'.join('{0:02x}'.format(ord(c)) for c in buf)
+
 
 def seconds_into_year(now):
     """Compute the number of seconds into the current year.
