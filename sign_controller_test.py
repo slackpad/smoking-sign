@@ -8,7 +8,7 @@ import time
 import unittest
 
 from sign_controller import SignController
-from sign_util import *
+from sign_util import CURSOR_HOME, CURSOR_LEFT, CURSOR_MAGIC_1, CURSOR_MAGIC_2, ESCAPE
 
 logging.basicConfig(level=logging.DEBUG)
 

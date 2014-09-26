@@ -4,10 +4,12 @@ updating the displayed count.
 """
 
 import logging
+import sign_util
 import threading
 import time
 
-from sign_util import *
+from sign_util import hexify
+from sign_util import CURSOR_HOME, CURSOR_LEFT, CURSOR_MAGIC_1, CURSOR_MAGIC_2, ESCAPE
 
 RATE_LIMIT = 1.0
 READ_SIZE = 1024

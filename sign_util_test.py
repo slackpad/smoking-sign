@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from sign_util import *
+from sign_util import hexify, seconds_into_year
 
 
 class TestHexify(unittest.TestCase):
