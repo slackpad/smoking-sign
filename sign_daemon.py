@@ -11,6 +11,7 @@ import sys
 import time
 
 from sign_controller import SignController
+from sign_util import CURSOR_HOME, CURSOR_MAGIC_1, CURSOR_MAGIC_2, ESCAPE
 from sign_util import create_serial_connection, seconds_into_year
 
 RATE_LIMIT = 1.0
@@ -18,7 +19,6 @@ SECONDS_PER_YEAR = 365 * 86400
 
 
 class MockConnection(object):
-
     """Fake connection used for standalone testing without a serial device."""
 
     def __init__(self):
@@ -27,7 +27,7 @@ class MockConnection(object):
     def read(self, size):
         if self.first:
             self.first = False
-            return chr(0x1b) + chr(0x59) + chr(0x2a) + chr(0x45)
+            return ESCAPE + CURSOR_MAGIC_1 + CURSOR_MAGIC_2 + CURSOR_HOME
         else:
             time.sleep(1.0)
             return ''
